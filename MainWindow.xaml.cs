@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WpfScreenHelper;
 
 namespace MangaViewer_WPF
 {
@@ -21,7 +23,6 @@ namespace MangaViewer_WPF
     public partial class MainWindow : Window
     {
         BitmapImage m_currentImg;
-        MainViewModel viewModel;
         public MainWindow()
         {
             InitializeComponent();
@@ -31,22 +32,24 @@ namespace MangaViewer_WPF
             m_currentImg.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
             m_currentImg.UriSource = new Uri("d:/e.png");
             m_currentImg.EndInit();
-
-            viewModel = new MainViewModel();
-            DataContext = viewModel;
-            viewModel.Img_src = m_currentImg;
-            viewModel.Img_rect = new Rect(0, 0, 800, 800);
-            viewModel.Img_scale = new ScaleTransform(1, 1);
-
-            viewModel.Tips_text = "SOMETHING BULABULA...";
-            viewModel.Tips_visable = Visibility.Visible;
-
+            Screen screen = Screen.AllScreens.ToList()[0]; ;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            Img.Source = m_currentImg;
+            Img.Clip = new RectangleGeometry(new Rect(0, 0, 800, 800));
+            Img.RenderTransform = new ScaleTransform(1, 1);
 
-            viewModel.Img_margin = new Thickness((ActualWidth - 800) / 2, (ActualHeight - 800) / 2, 0, 0);
+            Tips.Text = "SOMETHING BULABULA...";
+            Tips.Visibility = Visibility.Visible;
+            Img.Margin = new Thickness((Width - 800) / 2, (Height - 800) / 2, 0, 0);
+            //Trace.WriteLine(string.Format("Width: W{0}, I{1}; Height: W{2}, I{3}; M:{4}",Width,Img.ActualWidth,Height,Img.ActualHeight, Img.Margin.ToString()));
+        }
+
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            
         }
     }
 }
