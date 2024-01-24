@@ -18,5 +18,11 @@ namespace MangaViewer_WPF
         {
             Settings.Default.Save();
         }
+
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            MainWindow mwd = new MainWindow(e.Args);
+            mwd.Show();
+        }
     }
 }

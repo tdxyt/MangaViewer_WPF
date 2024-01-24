@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -23,9 +24,35 @@ namespace MangaViewer_WPF
     public partial class MainWindow : Window
     {
         BitmapImage m_currentImg;
-        public MainWindow()
+        List<string> m_fileList;
+        string m_sFolderPath;
+        int m_index;
+        int isFreeMode;
+        bool isReposMode;
+        int m_zoomRatio;
+        string sFile;
+        readonly List<string> EXT_NAMES = new List<string> { "gif", "jpg", "bmp", "png", "jpeg", "tif" };
+        public MainWindow(string[] args)
         {
             InitializeComponent();
+
+            if (args.Length == 0)
+            {
+                OpenFileDialog openPicDialog = new OpenFileDialog();
+                openPicDialog.Filter = "Image files|*."+EXT_NAMES.Aggregate((a,b) => a +";*." + b);
+                if (openPicDialog.ShowDialog() != true)
+                    Application.Current.Shutdown();
+                else
+                {
+                    sFile = openPicDialog.FileName;
+                    m_sFolderPath = sFile.Substring(0,sFile.LastIndexOf('\\') + 1);
+                }
+            }
+            else
+            {
+                sFile = args[0];
+            }
+
             m_currentImg = new BitmapImage();
             m_currentImg.BeginInit();
             m_currentImg.CacheOption = BitmapCacheOption.OnLoad;
