@@ -46,5 +46,17 @@ namespace MangaViewer_WPF.Properties {
                 this["screen_index"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string app_path {
+            get {
+                return ((string)(this["app_path"]));
+            }
+            set {
+                this["app_path"] = value;
+            }
+        }
     }
 }

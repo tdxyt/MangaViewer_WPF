@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MangaViewer_WPF"
         mc:Ignorable="d"
-        Title="MangaViewer" Height="450" Width="800" ResizeMode="NoResize" WindowState="Maximized"  WindowStyle="None" AllowsTransparency="True" Background="#80000000" Loaded="Window_Loaded" MouseDown="Window_MouseDown">
+        Title="MangaViewer" Height="450" Width="800" ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" Background="#80000000" Loaded="Window_Loaded" MouseDown="Window_MouseDown" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp" MouseUp="Window_MouseUp" Icon="/Apps_image_viewer_128px_1184636_easyicon.net.ico" MouseWheel="Window_MouseWheel">
     <Grid>
         <Image x:Name="Img" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
-        <TextBlock x:Name="Tips" Foreground="White" Background="#80000000" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontFamily="Calibri" FontWeight="Bold" Padding="10,10,10,10" Visibility="Hidden"/>
+        <TextBlock x:Name="Tips" Foreground="White" Background="#80000000" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontFamily="Calibri" FontWeight="Bold" Padding="10,15,10,15" Visibility="Hidden" MouseDown="Tips_MouseDown"/>
     </Grid>
 </Window>
