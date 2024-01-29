@@ -70,7 +70,7 @@ namespace MangaViewer_WPF
         }
 
         
-        private void show_tips(string tips, double last_sec = 1)
+        private void Show_tips(string tips, double last_sec = 1)
         {
             Tips.Text = tips;
             Tips.Visibility = Visibility.Visible;
@@ -78,7 +78,7 @@ namespace MangaViewer_WPF
             timer.Start();
         }
 
-        private void dispatcherTimer_Tick(object sender, EventArgs e)
+        private void DispatcherTimer_Tick(object sender, EventArgs e)
         {
             if (m_showing_time > 0)
             {
@@ -133,7 +133,7 @@ namespace MangaViewer_WPF
                 }
                 else
                 {
-                    show_tips(string.Format("Fail to load \"{0}\"", m_fileList[m_index]),2);
+                    Show_tips(string.Format("Fail to load \"{0}\"", m_fileList[m_index]),2);
                     bad_file_names.Add(m_fileList[m_index]);
                 }
                 return false;
@@ -142,7 +142,7 @@ namespace MangaViewer_WPF
             return true;
         }
 
-        private void screen_refresh()
+        private void Screen_refresh()
         {
             int max_s = Screen.AllScreens.Count();
             Properties.Settings.Default.screen_index = Properties.Settings.Default.screen_index % max_s;
@@ -153,14 +153,22 @@ namespace MangaViewer_WPF
             this.Width = scr_rect.Width;
             this.Height = scr_rect.Height;
         }
-        private void img_refresh()
+        private void Img_refresh()
         {
-            Img.Source = m_currentImg;
-            Img.Clip = new RectangleGeometry(new Rect(0, 0, 800, 800));
-            Img.RenderTransform = new ScaleTransform(1, 1);
-            Img.Margin = new Thickness((Width - 800) / 2, (Height - 800) / 2, 0, 0);
+            // TODO:
+            double zoom_ratio = m_zoomRatio / 100;
+            switch (Properties.Settings.Default.screen_index) 
+            {
+                case 0: // width-first mode
+                    break;
+                case 1: // height-first mode
+                    break; 
+                case 2: // free-zoo mode
+                    break;
+                default: break;
+            }   
         }
-        private void modelSwitch(bool isFirstMode)
+        private void Model_switch(bool isFirstMode)
         {
             if (isFirstMode)
             {
@@ -169,26 +177,26 @@ namespace MangaViewer_WPF
                     clip_rect.Offset(new Vector(-clip_rect.Left,0));
                 else if (Properties.Settings.Default.view_model == 1)
                     clip_rect.Offset(new Vector(0, -clip_rect.Top));
-                img_refresh();
+                Img_refresh();
                 if (Properties.Settings.Default.view_model == 2)
-                    show_tips("Free-Zoom");
+                    Show_tips("Free-Zoom");
                 else if (Properties.Settings.Default.view_model == 0)
-                    show_tips("Width-Prior");
+                    Show_tips("Width-Prior");
                 else
-                    show_tips("Height-Prior");
+                    Show_tips("Height-Prior");
             }
             else
             {
                 m_isReposMode = !m_isReposMode;
                 if (m_isReposMode)
-                    show_tips("Switch-Replace");
+                    Show_tips("Switch-Replace");
                 else
-                    show_tips("Non-Replace");
+                    Show_tips("Non-Replace");
             }
         }
-        private void show_info()
+        private void Show_info()
         {
-            show_tips(m_fileList[m_index] + "  (" + (m_index + 1).ToString() + "/" + m_fileList.Count.ToString() + " " + m_zoomRatio.ToString() + "%" + ") ");
+            Show_tips(m_fileList[m_index] + "  (" + (m_index + 1).ToString() + "/" + m_fileList.Count.ToString() + " " + m_zoomRatio.ToString() + "%" + ") ");
         }
 
         private bool try_set_new_img_index(int new_index)
@@ -204,10 +212,10 @@ namespace MangaViewer_WPF
                     m_index = old_index - 1;
                 return false;
             }
-            img_refresh();
+            Img_refresh();
             return true;
         }
-        private void imgSwitch(int direction)
+        private void Img_switch(int direction)
         {
             // for jumping and mouse click
             if (m_isJumpingTo) m_isJumpingTo = false;
@@ -217,27 +225,27 @@ namespace MangaViewer_WPF
             {
                 if (res < 0)
                 {
-                    show_tips("Cross the front");
+                    Show_tips("Cross the front");
                 }
                 else if (res >= m_fileList.Count)
                 {
-                    show_tips("Cross the end");
+                    Show_tips("Cross the end");
                 }
             }
             
         }
-        private void verticalMove(double distance)
+        private void Vertical_move(double distance)
         {
-            // TODO
+            // TODO:
             double newTop = clip_rect.Top + distance;
             if (newTop > 0) newTop = 0;
             else if (newTop + clip_rect.Height < ActualHeight) newTop = Height - clip_rect.Height;
                 return;
                 //mainViewPicBox.Top = newTop;
         }
-        private void horizontalMove(double distance)
+        private void Horizontal_move(double distance)
         {
-            // TODO
+            // TODO:
             double newLeft = clip_rect.Left + distance;
             if (newLeft > 0) newLeft = 0;
             else if (newLeft + clip_rect.Width < Width) newLeft = Width - clip_rect.Width;
@@ -247,22 +255,23 @@ namespace MangaViewer_WPF
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             timer = new DispatcherTimer();
-            timer.Tick += dispatcherTimer_Tick;
+            timer.Tick += DispatcherTimer_Tick;
             timer.Interval = TimeSpan.FromMilliseconds(100);
 
-            screen_refresh();
-            img_refresh();            
+            Screen_refresh();
+            Img_refresh();            
             //Trace.WriteLine(string.Empty == "");
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            m_showing_time = 0;
             if (e.ClickCount == 2 && e.ChangedButton == MouseButton.Middle && e.ButtonState == MouseButtonState.Pressed)
             {
                 Application.Current.Shutdown();
                 return;
             }
-            // drag event
+            // TODO: drag event
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
@@ -275,18 +284,12 @@ namespace MangaViewer_WPF
             m_showing_time = 0;
         }
 
-        private bool set_app_path()
+        private bool Set_app_path()
         {
             OpenFileDialog openPicDialog = new OpenFileDialog();
             openPicDialog.Filter = "Exacutable|*.exe";
-            if (openPicDialog.ShowDialog() != true)
-            {
-                return false;
-            }
-            else
-            {
-                Properties.Settings.Default.app_path = openPicDialog.FileName;
-            }
+            if (openPicDialog.ShowDialog() != true) return false;
+            else Properties.Settings.Default.app_path = openPicDialog.FileName;
             return true;
         }
         private void Window_KeyUp(object sender, KeyEventArgs e)
@@ -309,11 +312,11 @@ namespace MangaViewer_WPF
                 {
                     if (m_jumpNum > 0 && try_set_new_img_index(m_jumpNum - 1))
                     {
-                        show_info();
+                        Show_info();
                     }
                     return;
                 }
-                else show_tips(m_jumpNum.ToString() + "/" + m_fileList.Count.ToString(),3);
+                else Show_tips("To: " + m_jumpNum.ToString() + "/" + m_fileList.Count.ToString(),3);
                 return;
             }
             switch (e.Key)
@@ -322,7 +325,7 @@ namespace MangaViewer_WPF
                     Application.Current.Shutdown();
                     return;
                 case Key.F1:       
-                    show_tips(
+                    Show_tips(
 
 @"   HELP:
 Hold Mouse_Middle to drag.
@@ -335,8 +338,8 @@ Key_A = Mouse_X1 => Switch Width-Prior/Height-Prior/Free-Zoom mode
 Key_S = Mouse_X2 => Switch Switch-Replace/Non-Replace mode
 Key_N => Switch Screen
 Key_Esc = Mouse_MiddleDoubleclick => Quit
-Key_Up/Down = Mouse_wheel(Width-Prior) => Move image up/down
-On Free-Zoom mode:
+Key_Up/Down = Mouse_wheel(Width-Prior) => Move image forward/backward
+  On Free-Zoom mode:
 Key_Q/W => Move image left/right
 Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                     break;                    
@@ -344,16 +347,16 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                     WindowState = WindowState.Minimized;
                     break;
                 case Key.E:
-                    show_info();
+                    Show_info();
                     break;
                 case Key.A:
-                    modelSwitch(true);
+                    Model_switch(true);
                     break;
                 case Key.S:
-                    modelSwitch(false);
+                    Model_switch(false);
                     break;
                 case Key.J:
-                    show_tips("Jumping...");
+                    Show_tips("Jumping...");
                     m_jumpNum = 0;
                     m_isJumpingTo = true;
                     break;
@@ -361,26 +364,30 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                     // Switch screen
                     int max_s = Screen.AllScreens.Count();
                     Properties.Settings.Default.screen_index = (Properties.Settings.Default.screen_index + 1) % max_s;
-                    screen_refresh();
-                    img_refresh();
+                    Screen_refresh();
+                    Img_refresh();
                     break;
                 case Key.Up:
-                    verticalMove(VERTICAL_DELTA);
+                    if (Properties.Settings.Default.view_model == 1)
+                        Horizontal_move(HORIZONTAL_DELTA);
+                    else Vertical_move(VERTICAL_DELTA);
                     break;
                 case Key.Down:
-                    verticalMove(-VERTICAL_DELTA);
+                    if (Properties.Settings.Default.view_model == 1)
+                        Horizontal_move(-HORIZONTAL_DELTA);
+                    else Vertical_move(-VERTICAL_DELTA);
                     break;
                 case Key.Left:
-                    imgSwitch(-1);
+                    Img_switch(-1);
                     break;
                 case Key.Right:
-                    imgSwitch(1);
+                    Img_switch(1);
                     break;
                 case Key.F3:
-                    if (Properties.Settings.Default.app_path != string.Empty) set_app_path();
+                    if (Properties.Settings.Default.app_path != string.Empty) Set_app_path();
                     break;
                 case Key.F4:
-                    if (Properties.Settings.Default.app_path == string.Empty && !set_app_path())
+                    if (Properties.Settings.Default.app_path == string.Empty && !Set_app_path())
                         return;                        
                     else
                     {
@@ -398,19 +405,19 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                     {
                         if (e.Key == Key.Q)
                         {
-                            horizontalMove(HORIZONTAL_DELTA);
+                            Horizontal_move(HORIZONTAL_DELTA);
                         }
                         else if (e.Key == Key.W)
                         {
-                            horizontalMove(-HORIZONTAL_DELTA);
+                            Horizontal_move(-HORIZONTAL_DELTA);
                         }
                         else if (e.Key == Key.Z)
                         {
-                            zoom(true);
+                            Zoom(true);
                         }
                         else if (e.Key == Key.X)
                         {
-                            zoom(false);
+                            Zoom(false);
                         }
                     }                        
                     break;
@@ -419,7 +426,7 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
 
         private readonly List<int> ZOOM_L = new List<int>{ 5,6,7,8,10,12,14,17,20,24,29,35,42,50,60,72,85,100,120,145,175,210,250
         ,300,360,430,520,620,750,900,1100,1300,1600};
-        private void zoom(bool zoomIn = true)
+        private void Zoom(bool zoomIn = true)
         {
             int i = ZOOM_L.IndexOf(m_zoomRatio);
             if (zoomIn)
@@ -433,35 +440,32 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                 if (i < 0) i = 0;
             }
             m_zoomRatio = ZOOM_L[i];
-            img_refresh();
-            show_tips(m_zoomRatio.ToString() + "%");
+            Img_refresh();
+            Show_tips(m_zoomRatio.ToString() + "%");
         }
 
         private void Window_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (e.ButtonState == MouseButtonState.Pressed)
+            if (e.ButtonState == MouseButtonState.Released)
             {
                 switch (e.ChangedButton)
                 {
                     case MouseButton.Left:
-                        imgSwitch(1);
+                        Img_switch(1);
                         break;
                     case MouseButton.Right:
-                        imgSwitch(-1);
+                        Img_switch(-1);
                         break;
                     case MouseButton.XButton1:
-                        modelSwitch(true);
+                        Model_switch(true);
                         break;
                     case MouseButton.XButton2:
-                        modelSwitch(false);
+                        Model_switch(false);
                         break;
                     default: break;
                 }
             }
-            if (m_dragMidFlag)
-            {
-                m_dragMidFlag = false;
-            }
+            if (m_dragMidFlag)  m_dragMidFlag = false;
         }
 
         private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -469,14 +473,14 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
             switch (Properties.Settings.Default.view_model)
             {
                 case 0:
-                    verticalMove(e.Delta);
+                    Vertical_move(e.Delta);
                     break;
                 case 1:
-                    horizontalMove(e.Delta);
+                    Horizontal_move(e.Delta);
                     break;
                 case 2:
-                    if (e.Delta > 0) zoom(true);
-                    else zoom(false);
+                    if (e.Delta > 0) Zoom(true);
+                    else Zoom(false);
                     break;
                 default : break;
             }
