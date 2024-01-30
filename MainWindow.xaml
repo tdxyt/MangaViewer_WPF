@@ -4,9 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MangaViewer_WPF"
-        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         mc:Ignorable="d"
-        Title="MangaViewer" Height="450" Width="800" ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" Background="#80000000" Loaded="Window_Loaded" MouseDown="Window_MouseDown" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp" MouseUp="Window_MouseUp" Icon="/Apps_image_viewer_128px_1184636_easyicon.net.ico" MouseWheel="Window_MouseWheel" MouseMove="Window_MouseMove">
+        Title="MangaViewer" Height="450" Width="800" ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" Loaded="Window_Loaded" MouseDown="Window_MouseDown" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp" MouseUp="Window_MouseUp" Icon="/Apps_image_viewer_128px_1184636_easyicon.net.ico" MouseWheel="Window_MouseWheel" MouseMove="Window_MouseMove" Background="#90000000">
     <Grid>
         <Image Name="Img" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         <MediaElement x:Name="Gif" Stretch="Uniform" UnloadedBehavior="Manual" LoadedBehavior="Play" HorizontalAlignment="Center" VerticalAlignment="Center" MediaEnded="Gif_MediaEnded"/>

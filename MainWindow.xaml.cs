@@ -589,6 +589,7 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
 
         private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
         {
+            if (m_isGif) return;
             switch (Properties.Settings.Default.view_model)
             {
                 case 0:
