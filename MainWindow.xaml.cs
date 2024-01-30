@@ -18,6 +18,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Xml.Linq;
 using WpfScreenHelper;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MangaViewer_WPF
 {
@@ -47,6 +48,7 @@ namespace MangaViewer_WPF
         private bool m_dragMidFlag = false;
         private Point m_dragCentre;
         private Rect m_screenRect;
+        private bool m_isGif =false;
         public MainWindow(string[] args)
         {
             InitializeComponent();
@@ -57,7 +59,7 @@ namespace MangaViewer_WPF
                 openPicDialog.Filter = "Image files|*"+EXT_NAMES.Aggregate((a,b) => a +";*" + b);
                 if (openPicDialog.ShowDialog() != true)
                 {
-                    Application.Current.Shutdown();
+                    System.Windows.Application.Current.Shutdown();
                     return;
                 }
                 else
@@ -69,11 +71,18 @@ namespace MangaViewer_WPF
             {
                 sFile = args[0];
             }
+            Load_img_cache(sFile, true);
+        }
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            m_timer = new DispatcherTimer();
+            m_timer.Tick += DispatcherTimer_Tick;
+            m_timer.Interval = TimeSpan.FromMilliseconds(100);
 
-            Load_img_cache(sFile, true);            
+            Screen_refresh();
+            Img_refresh(true);
         }
 
-        
         private void Show_tips(string tips, double last_sec = 1)
         {
             Tips.Text = tips;
@@ -98,14 +107,29 @@ namespace MangaViewer_WPF
         private bool Load_img_cache(string path = null, bool first_run = false)
         {
             if (path == null) path = m_folderPath + m_fileList[m_index];
+
             try
             {
-                m_currentImg = new BitmapImage();
-                m_currentImg.BeginInit();
-                m_currentImg.CacheOption = BitmapCacheOption.OnLoad;
-                m_currentImg.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                m_currentImg.UriSource = new Uri(path);
-                m_currentImg.EndInit();
+                if (path.ToLower().EndsWith("gif"))
+                {
+                    m_isGif = true;
+                    Img.Visibility = Visibility.Hidden;
+                    Gif.Visibility = Visibility.Visible;
+                    Gif.Source = new Uri(@path);
+                }
+                else
+                {
+                    Img.Visibility = Visibility.Visible;
+                    Gif.Visibility = Visibility.Hidden;
+                    Gif.Source = null;
+                    m_isGif = false;
+                    m_currentImg = new BitmapImage();
+                    m_currentImg.BeginInit();
+                    m_currentImg.CacheOption = BitmapCacheOption.OnLoad;
+                    m_currentImg.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+                    m_currentImg.UriSource = new Uri(@path);
+                    m_currentImg.EndInit(); 
+                }
                 if (first_run) m_folderPath = path.Substring(0, path.LastIndexOf('\\') + 1);
                 m_fileList = new List<string>();
                 DirectoryInfo curFolder = new DirectoryInfo(m_folderPath);
@@ -118,20 +142,21 @@ namespace MangaViewer_WPF
                     }
                 }
                 m_fileList.Sort();
-                m_index = m_fileList.IndexOf(path.Substring(path.LastIndexOf('\\') + 1));
+                m_index = m_fileList.IndexOf(path.Substring(path.LastIndexOf('\\') + 1));             
+                
             }
             catch (Exception)
             {
                 
                 if (first_run)
-                {
+                {   
                     MessageBox.Show("Not supported file type.", "Info", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                    Application.Current.Shutdown();                    
+                    System.Windows.Application.Current.Shutdown();                    
                 }
                 else if (m_fileList.Count <= 1)
                 {
                     MessageBox.Show("No valid file.", "Info", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                    Application.Current.Shutdown();
+                    System.Windows.Application.Current.Shutdown();
                 }
                 else
                 {
@@ -140,7 +165,6 @@ namespace MangaViewer_WPF
                 }
                 return false;
             }
-            Img.Source = m_currentImg;
             return true;
         }
         private Int32Rect New_legal_clip(Int32Rect new_rect)
@@ -166,8 +190,10 @@ namespace MangaViewer_WPF
         }
         private void Img_refresh(bool replace)
         {
+            if(m_isGif) return;
             if (Properties.Settings.Default.view_model != 2)
             {
+                Img.Stretch = Stretch.Uniform;
                 m_scale = 1;
                 if (m_screenRect.Width >= m_currentImg.PixelWidth && m_screenRect.Height >= m_currentImg.PixelHeight)
                 {
@@ -205,12 +231,30 @@ namespace MangaViewer_WPF
                     }                    
                 }
                 Img.LayoutTransform = new ScaleTransform(m_scale, m_scale);
-                CroppedBitmap cb = new CroppedBitmap(m_currentImg, m_crop_rect);
-                Img.Source = cb;
+                Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);                
             }
             else // TODO:free-zoom
             {
-
+                Img.Stretch = Stretch.None;
+                int centre_x,centre_y;
+                if (replace)
+                {
+                    m_zoomRatio = 100;
+                    centre_x = m_currentImg.PixelWidth / 2;
+                    centre_y = m_currentImg.PixelHeight / 2;
+                }
+                else
+                {
+                    centre_x = m_crop_rect.X + m_crop_rect.Width / 2;
+                    centre_y = m_currentImg.PixelHeight / 2;
+                }
+                m_scale = (double)m_zoomRatio / 100;
+                m_crop_rect = New_legal_clip(centre_x-(int)(m_screenRect.Width / 2 / m_scale),
+                                            centre_y - (int)(m_screenRect.Height / 2 / m_scale),
+                                            (int)(m_screenRect.Width / m_scale),
+                                            (int)(m_screenRect.Height / m_scale));
+                Img.LayoutTransform = new ScaleTransform(m_scale, m_scale);
+                Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
             }
         }
 
@@ -228,19 +272,18 @@ namespace MangaViewer_WPF
 
         private void Model_switch(bool isFirstMode)
         {
+            if (m_isGif) return;
             if (isFirstMode)
             {
                 Properties.Settings.Default.view_model = (Properties.Settings.Default.view_model + 1) % 3;
                 m_zoomRatio = 100;
                 Img_refresh(false);
                 if (Properties.Settings.Default.view_model == 2)
-                {
-                    Img_refresh(false);
+                {                    
                     Show_tips("Free-Zoom");
                 }
                 else
                 {
-                    Img_refresh(true);
                     if (Properties.Settings.Default.view_model == 0)
                         Show_tips("Width-Prior");
                     else
@@ -304,7 +347,7 @@ namespace MangaViewer_WPF
         }
         private void Vertical_move(double distance)
         {
-            if (m_currentImg.PixelHeight >= m_crop_rect.Height)
+            if (!m_isGif && m_currentImg.PixelHeight >= m_crop_rect.Height)
             {
                 m_crop_rect.Y += (int)(m_scale * distance);
                 m_crop_rect = New_legal_clip(m_crop_rect);
@@ -313,7 +356,7 @@ namespace MangaViewer_WPF
         }
         private void Horizontal_move(double distance)
         {
-            if (m_currentImg.PixelWidth >= m_crop_rect.Width)
+            if (!m_isGif && m_currentImg.PixelWidth >= m_crop_rect.Width)
             {
                 m_crop_rect.X += (int)(m_scale * distance);
                 m_crop_rect = New_legal_clip(m_crop_rect);
@@ -321,24 +364,16 @@ namespace MangaViewer_WPF
             }
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            m_timer = new DispatcherTimer();
-            m_timer.Tick += DispatcherTimer_Tick;
-            m_timer.Interval = TimeSpan.FromMilliseconds(100);
 
-            Screen_refresh();
-            Img_refresh(true); 
-        }
 
         private void Window_MouseMove(object sender, MouseEventArgs e)
         {
             if (m_dragMidFlag)
             {
-                Vector offSet = e.GetPosition(this) - m_dragCentre;
+                Vector offSet = m_dragCentre - e.GetPosition(this);
                 m_dragCentre = e.GetPosition(this);
-                m_crop_rect.X += (int)(m_scale * offSet.X);
-                m_crop_rect.Y += (int)(m_scale * offSet.Y);
+                m_crop_rect.X += (int)(offSet.X / m_scale);
+                m_crop_rect.Y += (int)(offSet.Y / m_scale);
                 m_crop_rect = New_legal_clip(m_crop_rect);
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
             }
@@ -349,14 +384,13 @@ namespace MangaViewer_WPF
             m_showingTime = 0;
             if (e.ClickCount == 2 && e.ChangedButton == MouseButton.Middle && e.ButtonState == MouseButtonState.Pressed)
             {
-                Application.Current.Shutdown();
+                System.Windows.Application.Current.Shutdown();
                 return;
             }
-            else if (e.ChangedButton == MouseButton.Middle && e.ButtonState == MouseButtonState.Pressed)
+            else if (!m_isGif && e.ChangedButton == MouseButton.Middle && e.ButtonState == MouseButtonState.Pressed)
             {
                 m_dragCentre = e.GetPosition(this);
                 m_dragMidFlag = true;
-                Trace.WriteLine(m_dragCentre);
             }
         }
 
@@ -408,7 +442,7 @@ namespace MangaViewer_WPF
             switch (e.Key)
             {
                 case Key.Escape:
-                    Application.Current.Shutdown();
+                    System.Windows.Application.Current.Shutdown();
                     return;
                 case Key.F1:       
                     Show_tips(
@@ -571,5 +605,10 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
             }
         }
 
+        private void Gif_MediaEnded(object sender, RoutedEventArgs e)
+        {
+            Gif.Position = new TimeSpan(0, 0, 1);
+            Gif.Play();
+        }
     }
 }

@@ -4,11 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MangaViewer_WPF"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         mc:Ignorable="d"
         Title="MangaViewer" Height="450" Width="800" ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" Background="#80000000" Loaded="Window_Loaded" MouseDown="Window_MouseDown" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp" MouseUp="Window_MouseUp" Icon="/Apps_image_viewer_128px_1184636_easyicon.net.ico" MouseWheel="Window_MouseWheel" MouseMove="Window_MouseMove">
     <Grid>
-        <Image x:Name="Img" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="None"/>
-
+        <Image Name="Img" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <MediaElement x:Name="Gif" Stretch="Uniform" UnloadedBehavior="Manual" LoadedBehavior="Play" HorizontalAlignment="Center" VerticalAlignment="Center" MediaEnded="Gif_MediaEnded"/>
         <TextBlock x:Name="Tips" Foreground="White" Background="#80000000" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontFamily="Calibri" FontWeight="Bold" Padding="10,15,10,15" Visibility="Hidden" MouseDown="Tips_MouseDown"/>
     </Grid>
 </Window>
