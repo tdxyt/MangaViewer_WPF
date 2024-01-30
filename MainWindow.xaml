@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="MangaViewer" Height="450" Width="800" ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" Loaded="Window_Loaded" MouseDown="Window_MouseDown" KeyDown="Window_KeyDown" KeyUp="Window_KeyUp" MouseUp="Window_MouseUp" Icon="/Apps_image_viewer_128px_1184636_easyicon.net.ico" MouseWheel="Window_MouseWheel" MouseMove="Window_MouseMove" Background="#90000000">
     <Grid>
-        <Image Name="Img" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <Image Name="Img" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="NearestNeighbor" UseLayoutRounding="True" SnapsToDevicePixels="True"/>
         <MediaElement x:Name="Gif" Stretch="Uniform" UnloadedBehavior="Manual" LoadedBehavior="Play" HorizontalAlignment="Center" VerticalAlignment="Center" MediaEnded="Gif_MediaEnded"/>
         <TextBlock x:Name="Tips" Foreground="White" Background="#80000000" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontFamily="Calibri" FontWeight="Bold" Padding="10,15,10,15" Visibility="Hidden" MouseDown="Tips_MouseDown"/>
     </Grid>

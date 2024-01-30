@@ -38,8 +38,8 @@ namespace MangaViewer_WPF
         private readonly List<string> EXT_NAMES = new List<string> { ".gif", ".jpg", ".bmp", ".png", ".jpeg", ".tif" };
         private readonly List<int> ZOOM_L = new List<int>{ 5,6,7,8,10,12,14,17,20,24,29,35,42,50,60,72,85,100,120,145,175,210,250
             ,300,360,430,520,620,750,900,1100,1300,1600};
-        private readonly int HORIZONTAL_DELTA = 100;
-        private readonly int VERTICAL_DELTA = 100;
+        private readonly int HORIZONTAL_DELTA = 200;
+        private readonly int VERTICAL_DELTA = 200;
         private DispatcherTimer m_timer;        
         private bool m_isJumpingTo = false;        
         private int m_jumpNum;
@@ -75,6 +75,7 @@ namespace MangaViewer_WPF
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            
             m_timer = new DispatcherTimer();
             m_timer.Tick += DispatcherTimer_Tick;
             m_timer.Interval = TimeSpan.FromMilliseconds(100);
@@ -236,6 +237,10 @@ namespace MangaViewer_WPF
             else // TODO:free-zoom
             {
                 Img.Stretch = Stretch.None;
+                PresentationSource source = PresentationSource.FromVisual(this);
+                double sys_dpiX, sys_dpiY;
+                sys_dpiX = 96.0 * source.CompositionTarget.TransformToDevice.M11;
+                sys_dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
                 int centre_x,centre_y;
                 if (replace)
                 {
@@ -253,7 +258,7 @@ namespace MangaViewer_WPF
                                             centre_y - (int)(m_screenRect.Height / 2 / m_scale),
                                             (int)(m_screenRect.Width / m_scale),
                                             (int)(m_screenRect.Height / m_scale));
-                Img.LayoutTransform = new ScaleTransform(m_scale, m_scale);
+                Img.LayoutTransform = new ScaleTransform(m_scale * (m_currentImg.DpiX / sys_dpiX), m_scale * (m_currentImg.DpiY / sys_dpiY));
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
             }
         }
@@ -343,7 +348,7 @@ namespace MangaViewer_WPF
         {
 
             Trace.WriteLine(string.Format("Img: x:{0}, y:{1}, width:{2}, height:{3}", Img.Margin.Left, Img.Margin.Top,Img.Width,Img.Height));
-            Trace.WriteLine(string.Format("Img_Clip: x:{0}, y:{1}, width:{2}, height:{3}", Img.Clip.Bounds.Left, Img.Clip.Bounds.Top, Img.Clip.Bounds.Width, Img.Clip.Bounds.Height));
+            Trace.WriteLine(string.Format("Img_Clip: x:{0}, y:{1}, width:{2}, height:{3}", m_crop_rect.X, m_crop_rect.Y, m_crop_rect.Width, m_crop_rect.Height));
         }
         private void Vertical_move(double distance)
         {
@@ -593,10 +598,10 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
             switch (Properties.Settings.Default.view_model)
             {
                 case 0:
-                    Vertical_move(-e.Delta);
+                    Vertical_move(-e.Delta*2);
                     break;
                 case 1:
-                    Horizontal_move(-e.Delta);
+                    Horizontal_move(-e.Delta*2);
                     break;
                 case 2:
                     if (e.Delta > 0) Zoom(true);
