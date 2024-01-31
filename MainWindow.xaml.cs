@@ -624,10 +624,10 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                 switch (e.ChangedButton)
                 {
                     case MouseButton.Left:
-                        if (!m_dragging) Img_switch(1);
+                        Img_switch(1);
                         break;
                     case MouseButton.Right:
-                        Img_switch(-1);
+                        if (!m_dragging) Img_switch(-1);
                         break;
                     case MouseButton.XButton1:
                         Model_switch(true);
