@@ -35,11 +35,11 @@ namespace MangaViewer_WPF
         private string m_folderPath;
         private bool m_isReposMode = true;
         private int m_zoomRatio = 100;
-        private readonly List<string> EXT_NAMES = new List<string> { ".gif", ".jpg", ".bmp", ".png", ".jpeg", ".tif" };
+        private readonly List<string> EXT_NAMES = new List<string> { ".gif", ".jpg", ".bmp", ".png", ".jpeg", ".tif" , ".webp"};
         private readonly List<int> ZOOM_L = new List<int>{ 5,6,7,8,10,12,14,17,20,24,29,35,42,50,60,72,85,100,120,145,175,210,250
             ,300,360,430,520,620,750,900,1100,1300,1600};
-        private readonly int HORIZONTAL_DELTA = 200;
-        private readonly int VERTICAL_DELTA = 200;
+        private readonly int HORIZONTAL_DELTA = 120;
+        private readonly int VERTICAL_DELTA = 120;
         private DispatcherTimer m_timer;        
         private bool m_isJumpingTo = false;        
         private int m_jumpNum;
@@ -105,6 +105,54 @@ namespace MangaViewer_WPF
             }
         }
 
+        // from https://stackoverflow.com/questions/20848861/wpf-some-images-are-rotated-when-loaded
+        private readonly string _orientationQuery = "System.Photo.Orientation";
+        private BitmapImage LoadImageFile(String path)
+        {
+            Rotation rotation = Rotation.Rotate0;
+            using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                BitmapFrame bitmapFrame = BitmapFrame.Create(fileStream, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
+                BitmapMetadata bitmapMetadata = bitmapFrame.Metadata as BitmapMetadata;
+
+                if ((bitmapMetadata != null) && (bitmapMetadata.ContainsQuery(_orientationQuery)))
+                {
+                    object o = bitmapMetadata.GetQuery(_orientationQuery);
+
+                    if (o != null)
+                    {
+                        switch ((ushort)o)
+                        {
+                            case 6:
+                                {
+                                    rotation = Rotation.Rotate90;
+                                }
+                                break;
+                            case 3:
+                                {
+                                    rotation = Rotation.Rotate180;
+                                }
+                                break;
+                            case 8:
+                                {
+                                    rotation = Rotation.Rotate270;
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+
+            BitmapImage _image = new BitmapImage();
+            _image.BeginInit();
+            _image.UriSource = new Uri(path);
+            _image.Rotation = rotation;
+            _image.EndInit();
+            _image.Freeze();
+
+            return _image;
+        }
+
         private bool Load_img_cache(string path = null, bool first_run = false)
         {
             if (path == null) path = m_folderPath + m_fileList[m_index];
@@ -116,7 +164,7 @@ namespace MangaViewer_WPF
                     m_isGif = true;
                     Img.Visibility = Visibility.Hidden;
                     Gif.Visibility = Visibility.Visible;
-                    Gif.Source = new Uri(@path);
+                    Gif.Source = new Uri(path);
                 }
                 else
                 {
@@ -124,12 +172,7 @@ namespace MangaViewer_WPF
                     Gif.Visibility = Visibility.Hidden;
                     Gif.Source = null;
                     m_isGif = false;
-                    m_currentImg = new BitmapImage();
-                    m_currentImg.BeginInit();
-                    m_currentImg.CacheOption = BitmapCacheOption.OnLoad;
-                    m_currentImg.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                    m_currentImg.UriSource = new Uri(@path);
-                    m_currentImg.EndInit(); 
+                    m_currentImg = LoadImageFile(path);
                 }
                 if (first_run) m_folderPath = path.Substring(0, path.LastIndexOf('\\') + 1);
                 m_fileList = new List<string>();
@@ -192,9 +235,13 @@ namespace MangaViewer_WPF
         private void Img_refresh(bool replace)
         {
             if(m_isGif) return;
+            PresentationSource source = PresentationSource.FromVisual(this);
+            double sys_dpiX = 96.0 * source.CompositionTarget.TransformToDevice.M11;
+            double sys_dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
+            double dpi_fixX = m_currentImg.DpiX / sys_dpiX;
+            double dpi_fixY = m_currentImg.DpiY / sys_dpiY;
             if (Properties.Settings.Default.view_model != 2)
             {
-                Img.Stretch = Stretch.Uniform;
                 m_scale = 1;
                 if (m_screenRect.Width >= m_currentImg.PixelWidth && m_screenRect.Height >= m_currentImg.PixelHeight)
                 {
@@ -231,16 +278,11 @@ namespace MangaViewer_WPF
                         m_crop_rect = New_legal_clip(m_crop_rect.X + m_crop_rect.Width / 2 - (int)(m_screenRect.Width / 2 / m_scale), 0, (int)(m_screenRect.Width / m_scale), m_currentImg.PixelHeight);
                     }                    
                 }
-                Img.LayoutTransform = new ScaleTransform(m_scale, m_scale);
+                Img.LayoutTransform = new ScaleTransform(m_scale * dpi_fixX, m_scale * dpi_fixY);
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);                
             }
             else // TODO:free-zoom
             {
-                Img.Stretch = Stretch.None;
-                PresentationSource source = PresentationSource.FromVisual(this);
-                double sys_dpiX, sys_dpiY;
-                sys_dpiX = 96.0 * source.CompositionTarget.TransformToDevice.M11;
-                sys_dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
                 int centre_x,centre_y;
                 if (replace)
                 {
@@ -251,14 +293,14 @@ namespace MangaViewer_WPF
                 else
                 {
                     centre_x = m_crop_rect.X + m_crop_rect.Width / 2;
-                    centre_y = m_currentImg.PixelHeight / 2;
+                    centre_y = m_crop_rect.Y + m_crop_rect.Height / 2;
                 }
                 m_scale = (double)m_zoomRatio / 100;
                 m_crop_rect = New_legal_clip(centre_x-(int)(m_screenRect.Width / 2 / m_scale),
                                             centre_y - (int)(m_screenRect.Height / 2 / m_scale),
                                             (int)(m_screenRect.Width / m_scale),
                                             (int)(m_screenRect.Height / m_scale));
-                Img.LayoutTransform = new ScaleTransform(m_scale * (m_currentImg.DpiX / sys_dpiX), m_scale * (m_currentImg.DpiY / sys_dpiY));
+                Img.LayoutTransform = new ScaleTransform(m_scale * dpi_fixX, m_scale * dpi_fixY);                
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
             }
         }
@@ -346,15 +388,16 @@ namespace MangaViewer_WPF
         }
         private void debug_print()
         {
-
             Trace.WriteLine(string.Format("Img: x:{0}, y:{1}, width:{2}, height:{3}", Img.Margin.Left, Img.Margin.Top,Img.Width,Img.Height));
             Trace.WriteLine(string.Format("Img_Clip: x:{0}, y:{1}, width:{2}, height:{3}", m_crop_rect.X, m_crop_rect.Y, m_crop_rect.Width, m_crop_rect.Height));
+            //Trace.WriteLine(string.Format("Sys: {0},{1}; Img: {2},{3}", sys_dpiX, sys_dpiY, m_currentImg.DpiX, m_currentImg.DpiY));
         }
+
         private void Vertical_move(double distance)
         {
             if (!m_isGif && m_currentImg.PixelHeight >= m_crop_rect.Height)
             {
-                m_crop_rect.Y += (int)(m_scale * distance);
+                m_crop_rect.Y += (int)(Math.Max(1.0, m_scale) * distance);
                 m_crop_rect = New_legal_clip(m_crop_rect);
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
             }
@@ -363,7 +406,7 @@ namespace MangaViewer_WPF
         {
             if (!m_isGif && m_currentImg.PixelWidth >= m_crop_rect.Width)
             {
-                m_crop_rect.X += (int)(m_scale * distance);
+                m_crop_rect.X += (int)(Math.Max(1.0, m_scale) * distance);
                 m_crop_rect = New_legal_clip(m_crop_rect);
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
             }
@@ -377,8 +420,8 @@ namespace MangaViewer_WPF
             {
                 Vector offSet = m_dragCentre - e.GetPosition(this);
                 m_dragCentre = e.GetPosition(this);
-                m_crop_rect.X += (int)(offSet.X / m_scale);
-                m_crop_rect.Y += (int)(offSet.Y / m_scale);
+                m_crop_rect.X += (int)(offSet.X * Math.Max(1.0,m_scale));
+                m_crop_rect.Y += (int)(offSet.Y * Math.Max(1.0, m_scale));
                 m_crop_rect = New_legal_clip(m_crop_rect);
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
             }
@@ -598,10 +641,10 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
             switch (Properties.Settings.Default.view_model)
             {
                 case 0:
-                    Vertical_move(-e.Delta*2);
+                    Vertical_move(-e.Delta);
                     break;
                 case 1:
-                    Horizontal_move(-e.Delta*2);
+                    Horizontal_move(-e.Delta);
                     break;
                 case 2:
                     if (e.Delta > 0) Zoom(true);
