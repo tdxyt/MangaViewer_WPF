@@ -45,8 +45,9 @@ namespace MangaViewer_WPF
         private int m_jumpNum;
         private double m_showingTime = 0;
         private List<string> m_badFileNames = new List<string>();
-        private bool m_dragMidFlag = false;
-        private Point m_dragCentre;
+        private bool m_dragFlag = false;
+        private bool m_dragging = false;
+        private Point m_dragFrom;
         private Rect m_screenRect;
         private bool m_isGif =false;
         public MainWindow(string[] args)
@@ -145,6 +146,8 @@ namespace MangaViewer_WPF
 
             BitmapImage _image = new BitmapImage();
             _image.BeginInit();
+            _image.CacheOption = BitmapCacheOption.OnLoad;
+            _image.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
             _image.UriSource = new Uri(path);
             _image.Rotation = rotation;
             _image.EndInit();
@@ -169,8 +172,9 @@ namespace MangaViewer_WPF
                 else
                 {
                     Img.Visibility = Visibility.Visible;
-                    Gif.Visibility = Visibility.Hidden;
+                    Gif.Stop();
                     Gif.Source = null;
+                    Gif.Visibility = Visibility.Hidden;                    
                     m_isGif = false;
                     m_currentImg = LoadImageFile(path);
                 }
@@ -413,17 +417,18 @@ namespace MangaViewer_WPF
         }
 
 
-
         private void Window_MouseMove(object sender, MouseEventArgs e)
         {
-            if (m_dragMidFlag)
+            if (m_dragFlag)
             {
-                Vector offSet = m_dragCentre - e.GetPosition(this);
-                m_dragCentre = e.GetPosition(this);
-                m_crop_rect.X += (int)(offSet.X * Math.Max(1.0,m_scale));
-                m_crop_rect.Y += (int)(offSet.Y * Math.Max(1.0, m_scale));
+                Vector offSet = m_dragFrom - e.GetPosition(this);
+                m_dragFrom = e.GetPosition(this);
+                m_crop_rect.X += (int)(offSet.X / m_scale);
+                m_crop_rect.Y += (int)(offSet.Y / m_scale);
                 m_crop_rect = New_legal_clip(m_crop_rect);
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
+                m_dragging = true;
+                Cursor = Cursors.ScrollAll;
             }
         }
 
@@ -435,10 +440,11 @@ namespace MangaViewer_WPF
                 System.Windows.Application.Current.Shutdown();
                 return;
             }
-            else if (!m_isGif && e.ChangedButton == MouseButton.Middle && e.ButtonState == MouseButtonState.Pressed)
+            if (!m_isGif && e.ChangedButton == MouseButton.Right && e.ButtonState == MouseButtonState.Pressed
+                 && (m_currentImg.Width * m_scale > m_screenRect.Width || m_currentImg.Height * m_scale > m_screenRect.Height))
             {
-                m_dragCentre = e.GetPosition(this);
-                m_dragMidFlag = true;
+                m_dragFrom = e.GetPosition(this);
+                m_dragFlag = true;
             }
         }
 
@@ -496,7 +502,7 @@ namespace MangaViewer_WPF
                     Show_tips(
 
 @"   HELP:
-Hold Mouse_Middle to drag.
+Hold Mouse_Right to drag.
 Key_Right = Mouse_Left => Next image
 Key_Left = Mouse_Right => Previous image
 Key_E => Show image info
@@ -506,7 +512,7 @@ Key_A = Mouse_X1 => Switch Width-Prior/Height-Prior/Free-Zoom mode
 Key_S = Mouse_X2 => Switch Switch-Replace/Non-Replace mode
 Key_N => Switch Screen
 Key_Esc = Mouse_MiddleDoubleclick => Quit
-Key_Up/Down = Mouse_wheel(Width-Prior) => Move image forward/backward
+Key_Up/Down = Mouse_Wheel => Move image from mode
   On Free-Zoom mode:
 Key_Q/W => Move image left/right
 Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
@@ -618,7 +624,7 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                 switch (e.ChangedButton)
                 {
                     case MouseButton.Left:
-                        Img_switch(1);
+                        if (!m_dragging) Img_switch(1);
                         break;
                     case MouseButton.Right:
                         Img_switch(-1);
@@ -632,7 +638,12 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                     default: break;
                 }
             }
-            if (m_dragMidFlag)  m_dragMidFlag = false;
+            if (m_dragFlag) 
+            {
+                Cursor = Cursors.Arrow;
+                m_dragFlag = false; 
+                m_dragging = false;
+            }
         }
 
         private void Window_MouseWheel(object sender, MouseWheelEventArgs e)
