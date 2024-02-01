@@ -168,6 +168,8 @@ namespace MangaViewer_WPF
                     Img.Visibility = Visibility.Hidden;
                     Gif.Visibility = Visibility.Visible;
                     Gif.Source = new Uri(path);
+                    Gif.Stretch = Stretch.None;
+                    if(Gif.ActualHeight>m_screenRect.Height || Gif.ActualWidth>m_screenRect.Width)  Gif.Stretch = Stretch.Uniform; 
                 }
                 else
                 {
@@ -440,7 +442,7 @@ namespace MangaViewer_WPF
                 System.Windows.Application.Current.Shutdown();
                 return;
             }
-            if (!m_isGif && e.ChangedButton == MouseButton.Right && e.ButtonState == MouseButtonState.Pressed
+            if (!m_isGif && e.ChangedButton == MouseButton.Left && e.ButtonState == MouseButtonState.Pressed
                  && (m_currentImg.Width * m_scale > m_screenRect.Width || m_currentImg.Height * m_scale > m_screenRect.Height))
             {
                 m_dragFrom = e.GetPosition(this);
@@ -502,7 +504,7 @@ namespace MangaViewer_WPF
                     Show_tips(
 
 @"   HELP:
-Hold Mouse_Right to drag.
+Hold Mouse_Left to drag.
 Key_Right = Mouse_Left => Next image
 Key_Left = Mouse_Right => Previous image
 Key_E => Show image info
@@ -624,10 +626,10 @@ Key_Z/X = Mouse_Wheel => Zoom in/out", 10);
                 switch (e.ChangedButton)
                 {
                     case MouseButton.Left:
-                        Img_switch(1);
+                        if (!m_dragging) Img_switch(1);
                         break;
                     case MouseButton.Right:
-                        if (!m_dragging) Img_switch(-1);
+                        Img_switch(-1);
                         break;
                     case MouseButton.XButton1:
                         Model_switch(true);
