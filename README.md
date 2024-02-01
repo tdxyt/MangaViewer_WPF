@@ -4,4 +4,4 @@ It was originally programmed in VB a decade ago and not intended to open source,
 Codes are programmed in casual style and less commented with few .NET expirence, 
 thus RAM wasting and limited in functions. 
 
-**Press F1 to show help.
+**Press F1 to show help.**
