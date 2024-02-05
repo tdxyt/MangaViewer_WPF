@@ -418,15 +418,24 @@ namespace MangaViewer_WPF
             }
         }
 
-
+        private int _cell(double cord)
+        {
+            int res = (int)(cord / m_scale);
+            if (res == 0)
+            {
+                if (cord > 0) res = 1;
+                else if (cord < 0) res = -1;
+            }
+            return res;
+        }
         private void Window_MouseMove(object sender, MouseEventArgs e)
         {
             if (m_dragFlag)
             {
                 Vector offSet = m_dragFrom - e.GetPosition(this);
                 m_dragFrom = e.GetPosition(this);
-                m_crop_rect.X += (int)(offSet.X / m_scale);
-                m_crop_rect.Y += (int)(offSet.Y / m_scale);
+                m_crop_rect.X += _cell(offSet.X);
+                m_crop_rect.Y += _cell(offSet.Y);
                 m_crop_rect = New_legal_clip(m_crop_rect);
                 Img.Source = new CroppedBitmap(m_currentImg, m_crop_rect);
                 m_dragging = true;
